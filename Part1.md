@@ -40,26 +40,37 @@ We have provided the code that generates the checkboxes form, which you can incl
 ### Controller
 You have to do a bit of work to use the above code:
 
-1. As you can see, the code in view expects the variable `@all_ratings` to be an enumerable collection of all possible values of a movie rating, such as `['G','PG','PG-13','R']`. The controller action needs to set up this variable. And since the possible values of movie ratings are really the responsibility of the Movie model, it’s best if the controller sets this variable by consulting the Model. 
+#### 1. Set up all possible rating values
+As you can see, the code in view expects the variable `@all_ratings` to be an enumerable collection of all possible values of a movie rating, such as `['G','PG','PG-13','R']`. The controller action needs to set up this variable. And since the possible values of movie ratings are really the responsibility of the Movie model, it’s best if the controller sets this variable by consulting the Model. 
 
-2. Hence, a good form would be to create a class method of `Movie` that returns an appropriate value for this collection, say `Movie.all_ratings`, and have the controller assign that to the appropriate instance variable for the view to pick up.
+How to separate the responsibility of Model and Controller?
 
-3. In the code above, `@ratings_to_show` is assumed to be a collection of which ratings should be checked. The [documentation](https://api.rubyonrails.org/v4.2.11/classes/ActionView/Helpers/FormTagHelper.html#method-i-check_box_tag)for `check_box_tag` says that the third value, evaluated as a Boolean, tells whether the checkbox should be displayed as checked or not.  So `@ratings_to_show.include?('G')` would be true if `'G'` was a member of the collection. The controller action must also set up this array, _even if no check boxes are checked._
+> A good form would be to create a class method of `Movie` that returns an appropriate value for this collection, say `Movie.all_ratings`, and have the controller assign that to the appropriate instance variable for the view to pick up.
 
+#### 2. Which ratings should be checked?
+In the code above, `@ratings_to_show` is assumed to be a collection of which ratings should be checked. The [documentation](https://api.rubyonrails.org/v4.2.11/classes/ActionView/Helpers/FormTagHelper.html#method-i-check_box_tag)for `check_box_tag` says that the third value, evaluated as a Boolean, tells whether the checkbox should be displayed as checked or not.  So `@ratings_to_show.include?('G')` would be true if `'G'` was a member of the collection. The controller action must also set up this array, _even if no check boxes are checked._
 
  Why must the controller set up a default value for`@ratings_to_show` even if nothing is checked?
 
 > If it doesn't, then @ratings_to_show will have a nil value in the view, and trying to call nil.include? will cause an exception.
 
+
 You will also need code in the controller that knows:
 
-#### 1. How to figure out which boxes the user checked?
+#### 3. How to figure out which boxes the user checked?
 Try viewing the source (right click and click View Page Source) of the movie listings with the checkbox form, and you’ll see that the checkboxes have field names like `ratings[G]`, `ratings[PG]`, etc. This trick will cause Rails to aggregate the values into a single hash called `ratings`, whose keys will be the names of the checked boxes only, and whose values will be the value attribute of the checkbox (which is “1” by default, since we didn’t specify another value when calling the `check_box_tag` helper). 
-That is, if the user checks the G and R boxes, `params[]` will include as one of its values `:ratings=>{"G"=>"1", "R"=>"1"}`.
+
+Using the debugger, take a look at what is in `params[]` when the form is submitted with various checkboxes checked. Particularly, what is in `params[:ratings]` (or `params['ratings']` - special hashes in Rails such as `params` and `session` can be accessed by either strings or symbols, even though hashes in Ruby do not generally behave this way).
+
+If the user checks the G and R boxes, what will the `params[]` be like?
+
+>  `params[]` will include as one of its values 
+>  `:ratings=>{"G"=>"1", "R"=>"1"}`
 
 **Hint:** Check out the `Hash` documentation for an easy way to grab just the keys of a hash, since we don’t care about the values in this case. Checkboxes that weren’t checked don’t appear in the `params[]` hash at all.
 
-#### 2.  How to restrict the database query based on that result?
+
+#### 4.  How to restrict the database query based on that result?
 You’ll probably end up replacing `Movie.all` in the controller method. Since most interesting code should go in the model rather than exposing details of the schema to the controller, consider defining a class-level method in the model such as `Movie.with_ratings(ratings)` that takes an array of ratings (e.g. `["r", "pg-13"]`) and returns an ActiveRecord relation of movies whose rating matches (case-insensitively) anything in that array. 
 To do its job, this method can make use of `Movie.where`, which has various options to help you restrict the database query.
 
@@ -76,11 +87,9 @@ class Movie
  end
 ```
 
-Using the debugger, take a look at what is in `params[]` when the form is submitted with various checkboxes checked, and particularly, what is in `params[:ratings]` or `params['ratings']`.
-(Special hashes in Rails such as `params` and `session` can be accessed by either strings or symbols, even though hashes in Ruby do not generally behave this way).
 
 Notice that you will need to use the `params[:ratings]` values in two ways in the controller:
-1. To determine what values to pass to `Movie.with_ratings`
+1. To determine what values to pass to `Movie.with_ratings`.
 2. To set a variable that can be used by the view so that the appropriate checkboxes show up as checked when the filtered view is loaded.
 
 ### To pay attention to…
@@ -99,4 +108,7 @@ git commit -am "part 1 complete"
 git push heroku master
 ```
 
-**NOTE!** Be sure that you have used `git add` to add all the new files you’ve created! If in doubt, use `git status` to show which files Git thinks it does not know about. A common pitfall is forgetting to add some files, and then when the app is deployed to Heroku, it fails because some files are missing.
+**NOTE!** Be sure that you have used `git add` to add all the new files you’ve created! 
+If in doubt, use `git status` to show which files Git thinks it does not know about. 
+
+A common pitfall is forgetting to add some files, and then when the app is deployed to Heroku, it fails because some files are missing.
