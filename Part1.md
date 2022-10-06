@@ -48,7 +48,7 @@ How to separate the responsibility of Model and Controller?
 > A good form would be to create a class method of `Movie` that returns an appropriate value for this collection, say `Movie.all_ratings`, and have the controller assign that to the appropriate instance variable for the view to pick up.
 
 #### 2. Which ratings should be checked?
-In the code above, `@ratings_to_show` is assumed to be a collection of which ratings should be checked. The [documentation](https://api.rubyonrails.org/v4.2.11/classes/ActionView/Helpers/FormTagHelper.html#method-i-check_box_tag)for `check_box_tag` says that the third value, evaluated as a Boolean, tells whether the checkbox should be displayed as checked or not.  So `@ratings_to_show.include?('G')` would be true if `'G'` was a member of the collection. The controller action must also set up this array, _even if no check boxes are checked._
+In the code above, `@ratings_to_show` is assumed to be a collection of which ratings should be checked. The [documentation](https://api.rubyonrails.org/v4.2.11/classes/ActionView/Helpers/FormTagHelper.html#method-i-check_box_tag) for `check_box_tag` says that the third value, evaluated as a Boolean, tells whether the checkbox should be displayed as checked or not.  So `@ratings_to_show.include?('G')` would be true if `'G'` was a member of the collection. The controller action must also set up this array, _even if no check boxes are checked._
 
  Why must the controller set up a default value for`@ratings_to_show` even if nothing is checked?
 
@@ -74,7 +74,7 @@ If the user checks the G and R boxes, what will the `params[]` be like?
 You’ll probably end up replacing `Movie.all` in the controller method. Since most interesting code should go in the model rather than exposing details of the schema to the controller, consider defining a class-level method in the model such as `Movie.with_ratings(ratings)` that takes an array of ratings (e.g. `["r", "pg-13"]`) and returns an ActiveRecord relation of movies whose rating matches (case-insensitively) anything in that array. 
 To do its job, this method can make use of `Movie.where`, which has various options to help you restrict the database query.
 
-**Hint:** Read the [Guide](https://guides.rubyonrails.org/active_record_basics.html)and [API](https://api.rubyonrails.org/v4.2.11/classes/ActiveRecord/Base.html)about `ActiveRecord::Base` for examples of how to use `where` to do queries like this. You may also find `.present?` convenient. The [ActiveRecord Intro CHIPS assignment](https://parlorpolo-macroexotic.codio.io/saasbook/hw-activerecord-intro) may be helpful too. 
+**Hint:** Read the [Guide](https://guides.rubyonrails.org/active_record_basics.html) and [API](https://api.rubyonrails.org/v4.2.11/classes/ActiveRecord/Base.html) about `ActiveRecord::Base` for examples of how to use `where` to do queries like this. You may also find `.present?` convenient. The [ActiveRecord Intro CHIPS assignment](https://parlorpolo-macroexotic.codio.io/saasbook/hw-activerecord-intro) may be helpful too. 
 
 _We suggest_ adding a class method in `Movie.rb` as follows:
 ```ruby
